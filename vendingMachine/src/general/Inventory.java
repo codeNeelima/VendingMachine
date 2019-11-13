@@ -3,6 +3,8 @@ package general;
 import java.util.HashMap;
 import java.util.Map;
 
+import logging.LogHandler;
+
 public class Inventory<T> {
 	private Map<T, Integer> inventory = new HashMap<T, Integer>();
 
@@ -36,10 +38,10 @@ public class Inventory<T> {
 	}
 	
 	public void listInventoryItems(){
-		System.out.println("Available List of Items");
+		LogHandler.log("Available List of Items");
+		LogHandler.log("======================================");
 		for(Map.Entry<T, Integer> item : inventory.entrySet()){
-			System.out.println("======================================");
-			System.out.println(item.getKey()+" == "+item.getValue());
+			LogHandler.log(item.getKey()+" == "+item.getValue());
 		}
 	}
 

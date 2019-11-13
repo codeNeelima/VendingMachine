@@ -13,8 +13,9 @@ import general.Coin;
 import general.Inventory;
 import general.Item;
 import interfaces.VendingMachine;
+import logging.LogHandler;
 
-public class VendingMachineImpl implements VendingMachine {
+public class VendingMachineHandler implements VendingMachine {
 
 	private Inventory<Coin> cashInventory = new Inventory<Coin>();
 	private Inventory<Item> itemInventory = new Inventory<Item>();
@@ -22,7 +23,7 @@ public class VendingMachineImpl implements VendingMachine {
 	private Item currentItem;
 	private double currentBalance;
 
-	public VendingMachineImpl() {
+	public VendingMachineHandler() {
 		initialize();
 	}
 
@@ -62,6 +63,12 @@ public class VendingMachineImpl implements VendingMachine {
 		return new Bucket<Item, List<Coin>>(item, change);
 	}
 
+	/**
+	 * 
+	 * @return
+	 * @throws NotSufficientChangeException
+	 * @throws NotFullPaidException
+	 */
 	private Item collectItem() throws NotSufficientChangeException, NotFullPaidException {
 		if (isFullPaid()) {
 			if (hasSufficientChange()) {
@@ -75,6 +82,10 @@ public class VendingMachineImpl implements VendingMachine {
 		throw new NotFullPaidException("Price not full paid, remaining : ", remainingBalance);
 	}
 
+	/**
+	 * 
+	 * @return
+	 */
 	private List<Coin> collectChange() {
 		double changeAmount = currentBalance - currentItem.getPrice();
 		List<Coin> change = getChange(changeAmount);
@@ -84,7 +95,10 @@ public class VendingMachineImpl implements VendingMachine {
 		return change;
 	}
 
-	private List<Coin> collectPayment(double amount) {
+	/**
+	 * 
+	 */
+	public List<Coin> collectPayment(double amount) {
 		double changeAmount = currentBalance - amount;
 		List<Coin> change = getChange(changeAmount);
 		updateCashInventory(change);
@@ -102,6 +116,10 @@ public class VendingMachineImpl implements VendingMachine {
 		return refund;
 	}
 
+	/**
+	 * 
+	 * @return
+	 */
 	private boolean isFullPaid() {
 		if (currentBalance >= currentItem.getPrice()) {
 			return true;
@@ -109,6 +127,12 @@ public class VendingMachineImpl implements VendingMachine {
 		return false;
 	}
 
+	/**
+	 * 
+	 * @param amount
+	 * @return
+	 * @throws NotSufficientChangeException
+	 */
 	private List<Coin> getChange(double amount) throws NotSufficientChangeException {
 		List<Coin> changes = Collections.EMPTY_LIST;
 
@@ -165,15 +189,27 @@ public class VendingMachineImpl implements VendingMachine {
 	}
 
 	public void printStats() {
-		System.out.println("Total Sales : " + totalSales);
-		System.out.println("Current Item Inventory : " + itemInventory);
-		System.out.println("Current Cash Inventory : " + cashInventory);
+		LogHandler.log("Total Sales : " + totalSales);
+		LogHandler.log("Total Balance : " + currentBalance);
+		LogHandler.log("Current Item Inventory : ");
+		itemInventory.listInventoryItems();
+		LogHandler.log("Current Cash Inventory : ");
+		cashInventory.listInventoryItems();
 	}
 
+	/**
+	 * 
+	 * @return
+	 */
 	private boolean hasSufficientChange() {
 		return hasSufficientChangeForAmount(currentBalance - currentItem.getPrice());
 	}
 
+	/**
+	 * 
+	 * @param amount
+	 * @return
+	 */
 	private boolean hasSufficientChangeForAmount(double amount) {
 		boolean hasChange = true;
 		try {
@@ -215,7 +251,7 @@ public class VendingMachineImpl implements VendingMachine {
 
 			} catch (RuntimeException e) {
 
-				System.out.println("Please consider reordering " + i + " item is not available");
+				LogHandler.log("Please consider reordering " + i + " item is not available");
 			}
 		}
 
@@ -233,29 +269,44 @@ public class VendingMachineImpl implements VendingMachine {
 
 	}
 
-	public List<Coin> insertCoin(List<Coin> coinsList, double billAmount, List<Item> myOrderList) {
+	/**
+	 * 
+	 * @param coinsList
+	 * @param billAmount
+	 * @param myOrderList
+	 * @return
+	 */
+	public List<Coin> collectPayment(List<Coin> coinsList, double billAmount, List<Item> myOrderList)
+			throws NotSufficientChangeException {
 		double paidAmount = 0;
 		boolean transaction = false;
 		for (Coin coin : coinsList) {
 			paidAmount += coin.getDenomination();
 		}
 		if (paidAmount == billAmount) {
-			System.out.println("Thank you for the Transaction");
+			LogHandler.log("Thank you for the Transaction");
 			addCashInventory(coinsList);
 			transaction = true;
+			totalSales = paidAmount;
+
 		} else if (paidAmount > billAmount) {
-			System.out.println("Please wait while change is processing ...");
-			updateCashInventory(coinsList);
+			LogHandler.log("Please wait while change is processing ...");
+			addCashInventory(coinsList);
 			transaction = true;
-			return getChange(paidAmount - billAmount);
+			totalSales = paidAmount;
+
 		} else if (paidAmount < billAmount) {
-			throw new NotFullPaidException("Please complete the payment ", billAmount - paidAmount);
+			throw new NotFullPaidException("Please complete the payment : ", billAmount - paidAmount);
 		}
 
 		if (transaction) {
 			removeItemInventory(myOrderList);
 		}
-		return null;
+		List<Coin> refundCoins = getChange(paidAmount - billAmount);
+		for (Coin coin : refundCoins) {
+			cashInventory.deduct(coin);
+		}
+		return refundCoins;
 	}
 
 }

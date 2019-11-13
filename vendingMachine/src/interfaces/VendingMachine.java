@@ -1,7 +1,6 @@
 package interfaces; 
 
 import java.util.List;
-
 import general.Bucket;
 import general.Coin;
 import general.Item; 

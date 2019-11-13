@@ -5,7 +5,7 @@ import interfaces.VendingMachine;
 public class VendingMachineFactory {
 
 	public static VendingMachine createVendingMachine() {
-		return new VendingMachineImpl();
+		return new VendingMachineHandler();
 	}
 
 }

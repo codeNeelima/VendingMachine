@@ -5,13 +5,14 @@ import java.util.List;
 
 import general.Coin;
 import general.Item;
-import handlers.VendingMachineImpl;
+import handlers.VendingMachineHandler;
+import logging.LogHandler;
 
 public class VendingFlowTest {
 	
 	public static void main(String[] args) {
 		
-		VendingMachineImpl impl = new VendingMachineImpl();
+		VendingMachineHandler impl = new VendingMachineHandler();
 		
 		List<Item> myOrderList = new ArrayList<>();
 		impl.showInventory();
@@ -22,10 +23,16 @@ public class VendingFlowTest {
 		double billAmount = impl.placeOrder(myOrderList);
 		
 		List<Coin> coinsList = new ArrayList<>();
+		coinsList.add(Coin.HALF_DOLLAR);
+		coinsList.add(Coin.QUARTER);
+		impl.collectPayment(coinsList,billAmount,myOrderList);
 		
-		impl.insertCoin(coinsList,billAmount,myOrderList);
+		LogHandler.log("Your Transaction is Complete");
+		
+		LogHandler.log("Cart Status Now");
 		
 		impl.printStats();
+		
 	}
 
 }
