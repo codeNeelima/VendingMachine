@@ -1,10 +1,11 @@
-package handlers;
+package tests;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import general.Coin;
 import general.Item;
+import handlers.VendingMachineImpl;
 
 public class VendingFlowTest {
 	
